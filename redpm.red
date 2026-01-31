@@ -10,8 +10,8 @@ Red [
 ]
 
 ;-- Configuration
-libs-dir: %libs/
-deps-file: %deps.red
+deps-dir: %deps/
+deps-file: %package.red
 
 ;-- Colors (ANSI)
 green: "^[[32m"
@@ -40,12 +40,12 @@ check-git: does [
 load-deps: func [/local data] [
     unless exists? deps-file [
         print-err rejoin ["Dependencies file not found: " deps-file]
-        print-info "Create a deps.red file with your dependencies"
+        print-info "Create a package.red file with your dependencies"
         print ""
-        print "Example deps.red:"
+        print "Example package.red:"
         print "["
         print {    Red-Serial "https://github.com/ANLACO/Red-Serial"}
-        print "]"
+        print "]]"
         return none
     ]
     attempt [load deps-file]
@@ -62,7 +62,7 @@ parse-deps: func [deps /local result name url] [
 
 ;-- Install a single package
 install-package: func [name url /local target cmd] [
-    target: rejoin [libs-dir name]
+    target: rejoin [deps-dir name]
     
     either exists? target [
         print-warn rejoin [name " already installed, skipping"]
@@ -84,7 +84,7 @@ install-package: func [name url /local target cmd] [
 
 ;-- Update a single package
 update-package: func [name /local target cmd result] [
-    target: rejoin [libs-dir name]
+    target: rejoin [deps-dir name]
     
     unless exists? target [
         print-err rejoin [name " not installed"]
@@ -106,7 +106,7 @@ update-package: func [name /local target cmd result] [
 
 ;-- Remove a single package
 remove-package: func [name /local target cmd] [
-    target: rejoin [libs-dir name]
+    target: rejoin [deps-dir name]
     
     unless exists? target [
         print-err rejoin [name " not installed"]
@@ -134,8 +134,8 @@ cmd-install: func [/local deps pairs] [
     deps: load-deps
     unless deps [quit]
     
-    unless exists? libs-dir [
-        call/wait/shell rejoin ["mkdir -p " to-string libs-dir]
+    unless exists? deps-dir [
+        call/wait/shell rejoin ["mkdir -p " to-string deps-dir]
     ]
     
     pairs: parse-deps deps
@@ -180,7 +180,7 @@ cmd-list: func [/local deps pairs target] [
     
     pairs: parse-deps deps
     foreach [name url] pairs [
-        target: rejoin [libs-dir name]
+        target: rejoin [deps-dir name]
         either exists? target [
             print rejoin ["  " green "●" reset " " name " (" url ")"]
         ][
@@ -192,7 +192,7 @@ cmd-list: func [/local deps pairs target] [
 
 cmd-init: func [] [
     either exists? deps-file [
-        print-warn "deps.red already exists"
+        print-warn "package.red already exists"
     ][
         write deps-file {[
     ;-- Add your dependencies here
@@ -201,8 +201,8 @@ cmd-init: func [] [
     ;-- Example:
     ;-- Red-Serial "https://github.com/ANLACO/Red-Serial"
 ]}
-        print-ok "Created deps.red"
-        print-info "Edit deps.red to add your dependencies"
+        print-ok "Created package.red"
+        print-info "Edit package.red to add your dependencies"
     ]
 ]
 
@@ -214,8 +214,8 @@ cmd-help: does [
     print "Usage: ./redpm <command> [args]"
     print ""
     print "Commands:"
-    print "  init      Create a new deps.red file"
-    print "  install   Install all dependencies from deps.red"
+    print "  init      Create a new package.red file"
+    print "  install   Install all dependencies from package.red"
     print "  update    Update all installed dependencies"
     print "  remove    Remove a specific package"
     print "  list      List all dependencies and their status"
