@@ -1,0 +1,24 @@
+# Build output
+redpm
+
+# Red runtime artifacts
+libRedRT-defs.r
+libRedRT-extras.r
+libRedRT-include.red
+libRedRT.so
+libRedRT.dylib
+libRedRT.dll
+
+# Red compiler (download separately)
+redc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
