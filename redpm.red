@@ -9,6 +9,8 @@ Red [
     }
 ]
 
+#include %utils.red
+
 ;-- Configuration
 deps-dir: %deps/
 deps-file: %package.red
@@ -106,7 +108,7 @@ update-package: func [name /local target cmd result] [
 
 ;-- Remove a single package
 remove-package: func [name /local target cmd] [
-    target: rejoin [deps-dir name]
+    target: rejoin [deps-dir name "/"]
     
     unless exists? target [
         print-err rejoin [name " not installed"]
@@ -114,9 +116,10 @@ remove-package: func [name /local target cmd] [
     ]
     
     print-info rejoin ["Removing " name "..."]
-    cmd: rejoin ["rm -rf " to-string target]
-    call/wait/shell cmd
     
+    attempt [
+        delete-dir target
+    ]
     either exists? target [
         print-err rejoin ["Failed to remove " name]
         false
@@ -164,6 +167,7 @@ cmd-update: func [/local deps pairs] [
 ]
 
 cmd-remove: func [name /local] [
+    probe name
     either name [
         remove-package name
     ][

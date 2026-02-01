@@ -11,6 +11,7 @@ libRedRT.dll
 
 # Red compiler (download separately)
 redc
+red-cli
 
 # OS files
 .DS_Store
