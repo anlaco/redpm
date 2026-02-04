@@ -18,6 +18,7 @@ red-cli
 Thumbs.db
 
 # IDE/Editor files
+deps/
 .vscode/
 .idea/
 *.swp
