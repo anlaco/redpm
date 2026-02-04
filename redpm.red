@@ -140,7 +140,7 @@ cmd-install: func [/local deps pairs] [
     unless deps [quit]
     
     unless exists? deps-dir [
-        call/wait/shell rejoin ["mkdir -p " to-string deps-dir]
+        attempt [make-dir deps-dir]
     ]
     
     pairs: parse-deps deps
