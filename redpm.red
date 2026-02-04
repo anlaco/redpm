@@ -64,7 +64,7 @@ parse-deps: func [deps /local result name url] [
 
 ;-- Install a single package
 install-package: func [name url /local target cmd] [
-    target: rejoin [deps-dir name]
+    target: deps-dir/:name/(#"/")
     
     either exists? target [
         print-warn rejoin [name " already installed, skipping"]
@@ -86,7 +86,7 @@ install-package: func [name url /local target cmd] [
 
 ;-- Update a single package
 update-package: func [name /local target cmd result] [
-    target: rejoin [deps-dir name]
+    target: deps-dir/:name/(#"/")
     
     unless exists? target [
         print-err rejoin [name " not installed"]
@@ -108,8 +108,7 @@ update-package: func [name /local target cmd result] [
 
 ;-- Remove a single package
 remove-package: func [name /local target cmd] [
-    target: rejoin [deps-dir name "/"]
-    
+    target: deps-dir/:name/(#"/")
     unless exists? target [
         print-err rejoin [name " not installed"]
         return false
@@ -120,7 +119,10 @@ remove-package: func [name /local target cmd] [
     attempt [
         delete-dir target
     ]
-    either exists? target [
+    either all [
+        exists? target
+        (length? read target) > 1
+    ][
         print-err rejoin ["Failed to remove " name]
         false
     ][
@@ -184,7 +186,7 @@ cmd-list: func [/local deps pairs target] [
     
     pairs: parse-deps deps
     foreach [name url] pairs [
-        target: rejoin [deps-dir name]
+        target: deps-dir/:name/(#"/")
         either exists? target [
             print rejoin ["  " green "●" reset " " name " (" url ")"]
         ][
