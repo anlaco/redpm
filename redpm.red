@@ -9,7 +9,7 @@ Red [
     }
 ]
 
-#include %utils.red
+#include %deps/Red-Utils/Red-Utils.red
 
 ;-- Configuration
 deps-dir: %deps/
@@ -46,7 +46,7 @@ load-deps: func [/local data] [
         print ""
         print "Example package.red:"
         print "["
-        print {    Red-Serial "https://github.com/ANLACO/Red-Serial"}
+        print {    Red-Utils "https://github.com/ANLACO/Red-Utils"}
         print "]]"
         return none
     ]
@@ -203,7 +203,7 @@ cmd-init: func [] [
     ;-- Format: PackageName "https://github.com/user/repo"
     
     ;-- Example:
-    ;-- Red-Serial "https://github.com/ANLACO/Red-Serial"
+    Red-Utils "https://github.com/ANLACO/Red-Utils"
 ]}
         print-ok "Created package.red"
         print-info "Edit package.red to add your dependencies"

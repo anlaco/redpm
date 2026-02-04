@@ -23,3 +23,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+package.red
+red-cli.exe
+redc.exe
+redpm.exe
