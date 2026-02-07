@@ -28,6 +28,13 @@
 # - Un contribuidor ejecuta `make build` y obtiene `bin/redpm` ejecutable
 
 .PHONY: all build clean help check-prereqs
+.PHONY: build-debug-env
+
+# Use bash for recipe execution so behavior matches interactive shell
+SHELL := /bin/bash
+
+# Export PATH so make recipes inherit the interactive PATH
+export PATH
 
 all: build
 
