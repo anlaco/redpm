@@ -180,31 +180,34 @@ cmd: rejoin ["git clone --depth 1 " url " " path]
 cmd: rejoin ["git clone --depth 1 " url " " path]
 ```
 
-### Pseudocódigo antes del código
+### Pseudocódigo: herramienta de diseño, NO decoración del código
 
 Para funciones no triviales (más de 10 líneas o con lógica condicional),
 el flujo de desarrollo es:
 
-1. Escribir el **intento** en pseudocódigo (lenguaje natural).
-2. El director revisa el pseudocódigo.
-3. El pseudocódigo se convierte en los **comentarios** del archivo.
-4. El código real se escribe debajo de cada comentario.
+1. Escribir el **intento** en pseudocódigo (lenguaje natural) — en un
+   borrador, papel, issue o PR. **No en el archivo fuente.**
+2. Revisar el pseudocódigo (otra persona, tú mismo tras un descanso, o
+   un modelo de IA como herramienta auxiliar).
+3. Una vez conforme, implementar el código real.
+4. El pseudocódigo **no se copia al archivo**. Se descarta.
+
+**Los únicos comentarios que sobreviven en el código** son los que explican
+decisiones no obvias (el *por qué*). Si el código necesita un comentario
+para entender *qué* hace, el problema son los nombres, no la falta de
+comentarios.
 
 ```red
+;-- ✅ Bien: el código habla por sí mismo, el comentario explica el por qué
 install-all: func [/local packages pkg] [
-    ;-- Cargar la lista de paquetes desde deps.red
     packages: registry/load-packages
-    
-    ;-- Si no hay paquetes declarados, avisar y salir
     if empty? packages [
         logger/log-warn "No hay dependencias declaradas"
         exit
     ]
-    
-    ;-- Asegurar que existe el directorio de dependencias
+    ;-- Creamos deps/ aquí y no antes para no dejar directorios vacíos
+    ;-- si el usuario no tiene dependencias declaradas.
     filesystem/ensure-dir deps-dir
-    
-    ;-- Para cada paquete, instalarlo si no está ya
     foreach pkg packages [
         either package/installed? pkg [
             logger/log-info rejoin [package/get-name pkg " ya instalado"]
@@ -212,6 +215,18 @@ install-all: func [/local packages pkg] [
             install-single pkg
         ]
     ]
+]
+
+;-- ❌ Mal: pseudocódigo como comentarios que repiten lo que el código dice
+install-all: func [/local packages pkg] [
+    ;-- Cargar la lista de paquetes desde deps.red
+    packages: registry/load-packages
+    ;-- Si no hay paquetes declarados, avisar y salir
+    if empty? packages [...]
+    ;-- Asegurar que existe el directorio de dependencias
+    filesystem/ensure-dir deps-dir
+    ;-- Para cada paquete, instalarlo si no está ya
+    foreach pkg packages [...]
 ]
 ```
 

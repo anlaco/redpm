@@ -108,10 +108,11 @@ variables y funciones viven en el scope global. Esto hace que:
 
 ### Proceso obligatorio para cada tarea
 
-1. **Escribir pseudocódigo** en lenguaje natural antes de codificar.
-2. **Revisión** del pseudocódigo por el director.
-3. El pseudocódigo aprobado se convierte en **comentarios** del archivo.
-4. El código real se escribe **debajo** de cada comentario.
+1. **Escribir pseudocódigo** en lenguaje natural antes de codificar (en un
+   borrador, papel, issue o PR — no en el archivo fuente).
+2. **Revisión** del pseudocódigo por otra persona (o por ti mismo tras un descanso).
+3. Una vez conforme, **implementar el código**. El pseudocódigo se descarta.
+4. Solo sobreviven como comentarios las **decisiones no obvias** (el *por qué*).
 
 ### Riesgos del sprint
 

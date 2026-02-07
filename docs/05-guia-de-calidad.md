@@ -82,12 +82,18 @@ el director y el equipo verifican estos puntos:
 
 ## 2. Proceso de Programación con Pseudocódigo (PPP)
 
-Para funciones no triviales, el proceso es:
+Antes de escribir código para una función no trivial, piensa primero.
+Este proceso existe para detectar errores de diseño **antes** de que
+cuesten tiempo real.
 
-### Paso 1: Pseudocódigo
+### Paso 1: Pseudocódigo (temporal, fuera del código)
 
-El desarrollador (humano o IA) escribe el algoritmo en **lenguaje natural**,
-enfocado en el **intento** (qué se quiere lograr), no en la sintaxis.
+Escribe en lenguaje natural qué quieres que haga la función, enfocándote
+en el **intento** (qué lograr), no en la sintaxis.
+
+Hazlo donde te sea cómodo: un papel, un archivo de notas, un issue de
+GitHub, o incluso un comentario en un pull request. **No en el archivo
+fuente** — el pseudocódigo es un borrador, no forma parte del código final.
 
 ```
 Para instalar un paquete:
@@ -101,41 +107,62 @@ Para instalar un paquete:
 
 ### Paso 2: Revisión
 
-El director (o un compañero) revisa el pseudocódigo y verifica:
+Otra persona (o tú mismo después de un descanso) revisa el pseudocódigo:
 
 - ¿Se manejan todos los caminos (éxito y error)?
 - ¿Hay pasos que se podrían simplificar?
 - ¿Falta algún caso límite?
 
-### Paso 3: Pseudocódigo → Comentarios
+Si trabajas solo, una opción es pasar el pseudocódigo a un modelo de IA
+para que lo cuestione. Pero no es obligatorio — la revisión es lo útil,
+no quién la haga.
 
-El pseudocódigo aprobado se convierte en los comentarios del archivo:
+### Paso 3: Implementación
+
+Una vez conforme con el diseño, escribe el código real. El pseudocódigo
+se **descarta** — no se copia al archivo como comentarios.
+
+El código resultante debe ser legible por sí mismo gracias a buenos nombres
+de funciones y variables:
 
 ```red
-install-single: func [pkg [object!]] [
-    ;-- Verificar que la URL es válida
-    unless validator/valid-url? package/get-url pkg [...]
-    
-    ;-- Crear el directorio de destino si no existe
+install-single: func [pkg [object!] /local result sha] [
+    unless validator/valid-url? package/get-url pkg [
+        logger/log-error "URL inválida"
+        return false
+    ]
+    if package/installed? pkg [
+        logger/log-info rejoin [package/get-name pkg " ya instalado"]
+        return true
+    ]
     filesystem/ensure-dir package/get-path pkg
-    
-    ;-- Clonar el repositorio con profundidad 1
-    result: git-client/clone-repo ...
-    
-    ;-- Si el clonado falló, informar y limpiar
-    unless result [...]
-    
-    ;-- Registrar el SHA del commit en el lockfile
-    sha: git-client/get-current-sha ...
-    
-    ;-- Confirmar la instalación al usuario
-    logger/log-ok rejoin [...]
+    result: git-client/clone-repo package/get-url pkg package/get-path pkg
+    unless result [
+        logger/log-error rejoin ["No se pudo clonar " package/get-name pkg]
+        filesystem/remove-dir package/get-path pkg
+        return false
+    ]
+    sha: git-client/get-current-sha package/get-path pkg
+    logger/log-ok rejoin [package/get-name pkg " instalado"]
+    true
 ]
 ```
 
-### Paso 4: Código
+Fíjate: **no hay comentarios** porque no hacen falta. Los nombres lo dicen
+todo: `valid-url?`, `installed?`, `ensure-dir`, `clone-repo`, `remove-dir`.
 
-El código real se escribe debajo de cada comentario.
+### ¿Cuándo SÍ dejar un comentario?
+
+Solo cuando hay una **decisión no obvia** que alguien podría cuestionar:
+
+```red
+;-- Depth 1 porque solo necesitamos el último commit.
+;-- El historial completo puede pesar cientos de MB en repos grandes.
+result: git-client/clone-repo /shallow ...
+```
+
+Si el comentario repite lo que el código ya dice, sobra. Si el código no
+se entiende sin el comentario, el problema son los nombres.
 
 ---
 
