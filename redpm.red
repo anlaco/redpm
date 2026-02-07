@@ -13,7 +13,7 @@ Red [
 
 ;-- Configuration
 deps-dir: %deps/
-deps-file: %package.red
+deps-file: %deps.red
 
 ;-- Colors (ANSI)
 green: "^[[32m"
@@ -42,9 +42,9 @@ check-git: does [
 load-deps: func [/local data] [
     unless exists? deps-file [
         print-err rejoin ["Dependencies file not found: " deps-file]
-        print-info "Create a package.red file with your dependencies"
+        print-info "Create a deps.red file with your dependencies"
         print ""
-        print "Example package.red:"
+        print "Example deps.red:"
         print "["
         print {    Red-Utils "https://github.com/ANLACO/Red-Utils"}
         print "]]"
@@ -200,7 +200,7 @@ cmd-list: func [/local deps pairs target] [
 
 cmd-init: func [] [
     either exists? deps-file [
-        print-warn "package.red already exists"
+        print-warn "deps.red already exists"
     ][
         write deps-file {[
     ;-- Add your dependencies here
@@ -209,8 +209,8 @@ cmd-init: func [] [
     ;-- Example:
     Red-Utils "https://github.com/ANLACO/Red-Utils"
 ]}
-        print-ok "Created package.red"
-        print-info "Edit package.red to add your dependencies"
+        print-ok "Created deps.red"
+        print-info "Edit deps.red to add your dependencies"
     ]
 ]
 
@@ -222,8 +222,8 @@ cmd-help: does [
     print "Usage: ./redpm <command> [args]"
     print ""
     print "Commands:"
-    print "  init      Create a new package.red file"
-    print "  install   Install all dependencies from package.red"
+    print "  init      Create a new deps.red file"
+    print "  install   Install all dependencies from deps.red"
     print "  update    Update all installed dependencies"
     print "  remove    Remove a specific package"
     print "  list      List all dependencies and their status"

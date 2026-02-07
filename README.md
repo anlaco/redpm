@@ -20,8 +20,8 @@ sudo cp redpm /usr/local/bin/
 
 ```bash
 # In your project directory
-redpm init              # Create package.red
-# Edit package.red to add dependencies
+redpm init              # Create deps.red
+# Edit deps.red to add dependencies
 redpm install           # Install all dependencies
 ```
 
@@ -33,11 +33,11 @@ redpm install           # Install all dependencies
 redpm init
 ```
 
-Creates a `package.red` file in your project.
+Creates a `deps.red` file in your project.
 
 ### Define dependencies
 
-Edit `package.red`:
+Edit `deps.red`:
 
 ```red
 [
@@ -86,7 +86,7 @@ After `redpm install`, your project looks like:
 
 ```
 my-project/
-├── package.red           # Dependencies list
+├── deps.red           # Dependencies list
 ├── deps/                 # Installed packages
 │   ├── Red-Serial/
 │   │   ├── Red-Serial.red
@@ -113,8 +113,8 @@ port: open-serial "/dev/ttyUSB0"
 
 | Command | Description |
 |---------|-------------|
-| `init` | Create a new package.red file |
-| `install` | Install all dependencies from package.red |
+| `init` | Create a new deps.red file |
+| `install` | Install all dependencies from deps.red |
 | `update` | Update all installed dependencies |
 | `remove <pkg>` | Remove a specific package |
 | `list` | List all dependencies and status |

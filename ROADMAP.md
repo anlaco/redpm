@@ -100,10 +100,10 @@ Hoja de ruta para el desarrollo de redpm - Red Package Manager.
 
 ### 📤 Publicación
 - [ ] Comando `redpm publish`
-- [ ] Validación de package.red (metadatos)
+- [ ] Validación de deps.red (metadatos)
 - [ ] Verificación de autor (GitHub)
 
-### Formato package.red propuesto:
+### Formato deps.red propuesto:
 ```red
 Red [
     Title: "Red-Serial"
@@ -161,7 +161,7 @@ Red [
 ### 🎯 Comandos adicionales
 - [ ] `redpm outdated` - listar paquetes desactualizados
 - [ ] `redpm upgrade` - actualizar a últimas versiones compatibles
-- [ ] `redpm run <script>` - ejecutar scripts definidos en package.red
+- [ ] `redpm run <script>` - ejecutar scripts definidos en deps.red
 - [ ] `redpm doctor` - diagnosticar problemas
 
 ### 📚 Documentación
