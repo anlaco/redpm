@@ -169,10 +169,12 @@ cmd-update: func [/local deps pairs] [
 ]
 
 cmd-remove: func [name /local] [
-    probe name
+    ;-- Verificar si se proporcionó un nombre de paquete
     either name [
+        ;-- Si se proporcionó, proceder a remover el paquete
         remove-package name
     ][
+        ;-- Si no se proporcionó, mostrar mensaje de uso
         print-err "Usage: redpm remove <package-name>"
     ]
 ]
