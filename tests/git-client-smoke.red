@@ -6,6 +6,7 @@ Red [
 
 #include %../src/git-client.red
 #include %../src/logger.red
+#include %../deps/Red-Utils/Red-Utils.red
 
 print "Running git-client smoke test..."
 
