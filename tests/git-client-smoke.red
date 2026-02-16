@@ -6,7 +6,7 @@ Red [
 
 #include %../src/git-client.red
 #include %../src/logger.red
-#include %../deps/Red-Utils/Red-Utils.red
+#include %../src/filesystem.red
 
 print "Running git-client smoke test..."
 
@@ -17,7 +17,7 @@ unless git-client/git-available? [
 
 ;-- Clone a small repo into a temporary folder and verify it exists
 tmp: %tmp-git-client-test/
-if exists? tmp [delete-dir tmp]
+if filesystem/dir-exists? tmp [filesystem/remove-dir tmp]
 
 ok: git-client/clone-repo (to url! "https://github.com/ANLACO/Red-Utils") tmp
 unless ok [
@@ -32,7 +32,7 @@ either git-client/get-current-sha tmp [
 ]
 
 ;-- Clean up
-attempt [delete-dir tmp]
+attempt [filesystem/remove-dir tmp]
 
 print "GIT-CLIENT smoke test: OK"
 quit 0

@@ -9,221 +9,43 @@ Red [
     }
 ]
 
-#include %deps/Red-Utils/Red-Utils.red
 #include %src/package.red
 #include %src/logger.red
 #include %src/git-client.red
+#include %src/registry.red
+#include %src/filesystem.red
+#include %src/validator.red
+#include %src/manager.red
 
-;-- Configuration
-deps-dir: %deps/
-deps-file: %deps.red
-
-;-- Check if git is available
-check-git: does [
-    git-client/git-available?
-]
-
-;-- Load dependencies file
-load-deps: func [/local data] [
-    unless exists? deps-file [
-        logger/log-error rejoin ["Dependencies file not found: " deps-file]
-        logger/log-info "Create a deps.red file with your dependencies"
-        print ""
-        print "Example deps.red:"
-        print "["
-        print {    Red-Utils "https://github.com/ANLACO/Red-Utils"}
-        print "]]"
-        return none
-    ]
-    attempt [load deps-file]
-]
-
-;-- Parse dependencies into package objects (ADT `package!`)
-parse-deps: func [deps /local result name url pkg] [
-    result: copy []
-    foreach [name url] deps [
-        ;-- convert URL strings to native url! and construct ADT
-        pkg: package/make-package to-string name (to url! url)
-        append result pkg
-    ]
-    result
-]
-
-;-- Install a single package (accepts package object)
-install-package: func [pkg [object!] /local name url target cmd] [
-    name: package/get-name pkg
-    url:  package/get-url pkg
-    target: deps-dir/:name/(#"/")
-    
-    either exists? target [
-        logger/log-warn rejoin [name " already installed, skipping"]
-        return true
-    ][
-        logger/log-info rejoin ["Installing " name "..."]
-        ;-- use git-client to clone (shallow)
-        unless git-client/clone-repo url target /shallow [
-            logger/log-error rejoin ["Failed to install " name]
-            return false
-        ]
-        logger/log-ok rejoin [name " installed"]
-        ;-- set path/status in ADT
-        package/set-path pkg target
-        package/set-status pkg 'installed
-        true
-    ]
-]
-
-;-- Update a single package (accepts package object)
-update-package: func [pkg [object!] /local name target cmd result] [
-    name: package/get-name pkg
-    target: deps-dir/:name/(#"/")
-    
-    unless exists? target [
-        logger/log-error rejoin [name " not installed"]
-        return false
-    ]
-    
-    logger/log-info rejoin ["Updating " name "..."]
-    result: git-client/pull-repo target
-    unless result [
-        logger/log-error rejoin ["Failed to pull " name]
-        return false
-    ]
-    either find result "Already up to date" [
-        logger/log-ok rejoin [name " already up to date"]
-    ][
-        logger/log-ok rejoin [name " updated"]
-    ]
-    true
-]
-
-;-- Remove a single package (accepts package object)
-remove-package: func [pkg [object!] /local name target] [
-    name: package/get-name pkg
-    target: either package/get-path pkg [package/get-path pkg][deps-dir/:name/(#"/")]
-    unless exists? target [
-        logger/log-error rejoin [name " not installed"]
-        return false
-    ]
-    
-    logger/log-info rejoin ["Removing " name "..."]
-    attempt [
-        delete-dir target
-    ]
-    either all [
-        exists? target
-        (length? read target) > 1
-    ][
-        logger/log-error rejoin ["Failed to remove " name]
-        false
-    ][
-        logger/log-ok rejoin [name " removed"]
-        true
-    ]
-]
 
 ;-- Commands
-cmd-install: func [/local deps packages] [
-    print "Installing dependencies..."
-    print ""
-    
-    deps: load-deps
-    unless deps [quit]
-    
-    unless exists? deps-dir [
-        attempt [make-dir deps-dir]
-    ]
-    
-    packages: parse-deps deps
-    foreach pkg packages [
-        install-package pkg
-    ]
-    
-    print ""
-    logger/log-ok "Done!"
+cmd-install: func [] [
+    manager/install-all
 ]
 
-cmd-update: func [/local deps packages] [
-    print "Updating dependencies..."
-    print ""
-    
-    deps: load-deps
-    unless deps [quit]
-    
-    packages: parse-deps deps
-    foreach pkg packages [
-        update-package pkg
-    ]
-    
-    print ""
-    logger/log-ok "Done!"
+cmd-update: func [] [
+    manager/update-all
 ]
 
-cmd-remove: func [name /local packages pkg found] [
-    ;-- Verificar si se proporcionó un nombre de paquete
+cmd-remove: func [name /local] [
     either name [
-        packages: load-deps
-        unless packages [quit]
-        packages: parse-deps packages
-        ;-- Buscar el package declarado
-        found: none
-        foreach p packages [
-            if package/get-name p = name [found: p break]
-        ]
-        if found [
-            remove-package found
-        ][
-            ;-- No declarado: construir paquete temporal que apunte a deps/<name>/
-            pkg: package/make-package to-string name
-            package/set-path pkg deps-dir/:name/(#"/")
-            remove-package pkg
-        ]
+        manager/remove-by-name name
     ][
-        ;-- Si no se proporcionó, mostrar mensaje de uso
         logger/log-error "Usage: redpm remove <package-name>"
     ]
 ]
 
-cmd-list: func [/local deps packages target] [
-    deps: load-deps
-    unless deps [quit]
-    
-    print "Dependencies:"
-    print ""
-    
-    packages: parse-deps deps
-    foreach pkg packages [
-        name: package/get-name pkg
-        url:  package/get-url pkg
-        target: deps-dir/:name/(#"/")
-        either exists? target [
-            print rejoin ["  " logger/green "●" logger/reset " " name " (" url ")"]
-        ][
-            print rejoin ["  " logger/red "○" logger/reset " " name " (not installed)"]
-        ]
-    ]
-    print ""
+cmd-list: func [] [
+    manager/list
 ]
 
 cmd-init: func [] [
-    either exists? deps-file [
-        logger/log-warn "deps.red already exists"
-    ][
-        write deps-file {[
-    ;-- Add your dependencies here
-    ;-- Format: PackageName "https://github.com/user/repo"
-    
-    ;-- Example:
-    Red-Utils "https://github.com/ANLACO/Red-Utils"
-]}
-        logger/log-ok "Created deps.red"
-        logger/log-info "Edit deps.red to add your dependencies"
-    ]
+    manager/init
 ]
 
 cmd-help: does [
     print ""
-    print "redpm - Red Package Manager v0.1.0"
+    print "redpm - Red Package Manager v0.1.1"
     print "=================================="
     print ""
     print "Usage: ./redpm <command> [args]"
@@ -250,7 +72,7 @@ main: func [/local args cmd] [
     either empty? args [
         cmd-help
     ][
-        unless check-git [quit]
+        unless git-client/git-available? [quit]
         
         cmd: first args
         

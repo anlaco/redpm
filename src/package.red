@@ -12,6 +12,7 @@ package: context [
     make-package: func [
         name [string!]
         url  [url!] /optional
+        /local obj
     ][
         ;-- Avoid collision: initialize fields then assign externally
         obj: make object! [

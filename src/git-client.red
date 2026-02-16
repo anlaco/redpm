@@ -8,7 +8,7 @@ Red [
 git-client: context [
 
     ;-- Return true if `git` executable is available on PATH
-    git-available?: does [
+    git-available?: func [/local out] [
         out: ""
         call/output "git --version" out
         find out "git version"
@@ -20,6 +20,7 @@ git-client: context [
         url [url!]
         target [file!]
         /shallow
+        /local cmd
     ][
         cmd: rejoin ["git clone " (either shallow ["--depth 1 "] [""]) to-string url " " to-string target " 2>&1"]
         ;-- Use call/wait/shell to allow interactive output if necessary
@@ -28,7 +29,7 @@ git-client: context [
     ]
 
     ;-- Pull in an existing repo. Returns stdout (string) or none on failure
-    pull-repo: func [path [file!]] [
+    pull-repo: func [path [file!] /local out cmd] [
         out: ""
         cmd: rejoin ["cd " to-string path " && git pull 2>&1"]
         attempt [call/output/shell cmd out]
@@ -36,7 +37,7 @@ git-client: context [
     ]
 
     ;-- Checkout a tag/branch/commit in an existing repo. Returns true/false
-    checkout-version: func [path [file!] ref [string!]] [
+    checkout-version: func [path [file!] ref [string!] /local out cmd] [
         out: ""
         cmd: rejoin ["cd " to-string path " && git checkout " ref " 2>&1"]
         attempt [call/output/shell cmd out]
@@ -44,7 +45,7 @@ git-client: context [
     ]
 
     ;-- Get current commit SHA (short). Returns string or none
-    get-current-sha: func [path [file!]] [
+    get-current-sha: func [path [file!] /local out cmd] [
         out: ""
         cmd: rejoin ["cd " to-string path " && git rev-parse --short HEAD 2>&1"]
         attempt [call/output/shell cmd out]
@@ -52,7 +53,7 @@ git-client: context [
     ]
 
     ;-- Return true if repo has uncommitted changes
-    repo-has-changes?: func [path [file!]] [
+    repo-has-changes?: func [path [file!] /local out cmd] [
         out: ""
         cmd: rejoin ["cd " to-string path " && git status --porcelain 2>&1"]
         attempt [call/output/shell cmd out]
