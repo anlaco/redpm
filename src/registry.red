@@ -13,7 +13,7 @@ registry: context [
     lock-file: %deps.lock
 
     ;-- Read deps.red and return a block of package! objects or none
-    load-packages: func [/local data packages name url u] [
+    load-packages: func [/local data packages name url u result] [
         unless exists? deps-file [return none]
         data: attempt [load deps-file]
         unless data [return none]

@@ -113,7 +113,7 @@ manager: context [
     ]
 
     ;-- Remove by name (looks in registry first)
-    remove-by-name: func [name [string!] /local pkgs found pkg] [
+    remove-by-name: func [name [string!] /local pkgs found pkg p] [
         pkgs: registry/load-packages
         unless pkgs [
             ; if no deps declared, still try to remove by path

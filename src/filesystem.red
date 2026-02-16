@@ -20,7 +20,7 @@ filesystem: context [
     ]
 
     ;-- Remove directory recursively (absorbs Red-Utils/delete-dir behavior)
-    remove-dir: func [path [file!] /local contents] [
+    remove-dir: func [path [file!] /local contents item] [
         ;-- Normalize and debug (debug-level only)
         logger/log-debug rejoin ["remove-dir called on: " to-string path " exists?: " to-string exists? path]
         if not exists? path [path: append path #"/"]
@@ -46,7 +46,7 @@ filesystem: context [
     ;-- List subdirectories (returns block!)
     ;-- Detect directories by attempting to `read` each entry; `read` on a
     ;-- directory returns a block, on a file returns a string.
-    list-subdirs: func [path [file!] /local blk contents cand r] [
+    list-subdirs: func [path [file!] /local blk contents cand r item] [
         blk: copy []
         contents: attempt [read path]
         if none? contents [return copy []]
