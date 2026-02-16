@@ -12,6 +12,7 @@ Red [
 #include %deps/Red-Utils/Red-Utils.red
 #include %src/package.red
 #include %src/logger.red
+#include %src/git-client.red
 
 ;-- Configuration
 deps-dir: %deps/
@@ -19,12 +20,7 @@ deps-file: %deps.red
 
 ;-- Check if git is available
 check-git: does [
-    result: ""
-    call/output "git --version" result
-    either find result "git version" [true][
-        logger/log-error "Git not found. Please install git."
-        false
-    ]
+    git-client/git-available?
 ]
 
 ;-- Load dependencies file
@@ -63,19 +59,16 @@ install-package: func [pkg [object!] /local name url target cmd] [
         return true
     ][
         logger/log-info rejoin ["Installing " name "..."]
-        cmd: rejoin ["git clone --depth 1 " url " " to-string target " 2>&1"]
-        call/wait/shell cmd
-        
-        either exists? target [
-            logger/log-ok rejoin [name " installed"]
-            ;-- set path/status in ADT
-            package/set-path pkg target
-            package/set-status pkg 'installed
-            true
-        ][
+        ;-- use git-client to clone (shallow)
+        unless git-client/clone-repo url target /shallow [
             logger/log-error rejoin ["Failed to install " name]
-            false
+            return false
         ]
+        logger/log-ok rejoin [name " installed"]
+        ;-- set path/status in ADT
+        package/set-path pkg target
+        package/set-status pkg 'installed
+        true
     ]
 ]
 
@@ -90,10 +83,11 @@ update-package: func [pkg [object!] /local name target cmd result] [
     ]
     
     logger/log-info rejoin ["Updating " name "..."]
-    cmd: rejoin ["cd " to-string target " && git pull 2>&1"]
-    result: ""
-    call/output/shell cmd result
-    
+    result: git-client/pull-repo target
+    unless result [
+        logger/log-error rejoin ["Failed to pull " name]
+        return false
+    ]
     either find result "Already up to date" [
         logger/log-ok rejoin [name " already up to date"]
     ][
