@@ -10,8 +10,8 @@ package: context [
 
     ;-- Create a package object (url is optional)
     make-package: func [
-        name [string!] 
-        url  [string!] /optional
+        name [string!]
+        url  [url!] /optional
     ][
         ;-- Avoid collision: initialize fields then assign externally
         obj: make object! [
@@ -22,7 +22,7 @@ package: context [
             path:    none
         ]
         obj/name: to-string name
-        if url [obj/url: to-string url]
+        if url [obj/url: url]
         obj
     ]
 

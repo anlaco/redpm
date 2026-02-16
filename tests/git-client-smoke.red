@@ -19,7 +19,7 @@ unless git-client/git-available? [
 tmp: %tmp-git-client-test/
 if exists? tmp [delete-dir tmp]
 
-ok: git-client/clone-repo "https://github.com/ANLACO/Red-Utils" tmp
+ok: git-client/clone-repo (to url! "https://github.com/ANLACO/Red-Utils") tmp
 unless ok [
     logger/log-error "git-client/clone-repo failed (network or remote unavailable)"
     quit 2

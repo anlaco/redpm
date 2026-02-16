@@ -2,7 +2,7 @@ Red [
     Title:   "Red Package Manager"
     Author:  "ANLACO"
     File:    %redpm.red
-    Version: 0.1.0
+    Version: 0.1.1
     Purpose: {
         Simple package manager for Red.
         Manages dependencies from Git repositories.
@@ -42,7 +42,8 @@ load-deps: func [/local data] [
 parse-deps: func [deps /local result name url pkg] [
     result: copy []
     foreach [name url] deps [
-        pkg: package/make-package to-string name to-string url
+        ;-- convert URL strings to native url! and construct ADT
+        pkg: package/make-package to-string name (to url! url)
         append result pkg
     ]
     result
@@ -122,7 +123,7 @@ remove-package: func [pkg [object!] /local name target] [
 ]
 
 ;-- Commands
-cmd-install: func [/local deps pairs] [
+cmd-install: func [/local deps packages] [
     print "Installing dependencies..."
     print ""
     
@@ -142,7 +143,7 @@ cmd-install: func [/local deps pairs] [
     logger/log-ok "Done!"
 ]
 
-cmd-update: func [/local deps pairs] [
+cmd-update: func [/local deps packages] [
     print "Updating dependencies..."
     print ""
     
@@ -183,7 +184,7 @@ cmd-remove: func [name /local packages pkg found] [
     ]
 ]
 
-cmd-list: func [/local deps pairs target] [
+cmd-list: func [/local deps packages target] [
     deps: load-deps
     unless deps [quit]
     

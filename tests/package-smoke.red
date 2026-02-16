@@ -9,7 +9,7 @@ Red [
 
 print "Running package ADT smoke test..."
 
-pkg: package/make-package "Red-Utils" "https://github.com/ANLACO/Red-Utils"
+pkg: package/make-package "Red-Utils" (to url! "https://github.com/ANLACO/Red-Utils")
 print rejoin ["name: " package/get-name pkg]
 print rejoin ["url: " package/get-url pkg]
 print rejoin ["version: " package/get-version pkg]

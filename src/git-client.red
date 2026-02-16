@@ -17,11 +17,11 @@ git-client: context [
     ;-- Clone a repo into `target` (shallow by default)
     ;-- Returns: true on success, false on failure
     clone-repo: func [
-        url [string!]
+        url [url!]
         target [file!]
         /shallow
     ][
-        cmd: rejoin ["git clone " (either shallow ["--depth 1 "] [""]) url " " to-string target " 2>&1"]
+        cmd: rejoin ["git clone " (either shallow ["--depth 1 "] [""]) to-string url " " to-string target " 2>&1"]
         ;-- Use call/wait/shell to allow interactive output if necessary
         call/wait/shell cmd
         exists? target
