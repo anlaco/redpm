@@ -10,30 +10,19 @@ Red [
 ]
 
 #include %deps/Red-Utils/Red-Utils.red
+#include %src/package.red
+#include %src/logger.red
 
 ;-- Configuration
 deps-dir: %deps/
 deps-file: %deps.red
-
-;-- Colors (ANSI)
-green: "^[[32m"
-red: "^[[31m"
-yellow: "^[[33m"
-cyan: "^[[36m"
-reset: "^[[0m"
-
-;-- Helper functions
-print-ok: func [msg] [print rejoin [green "✓ " reset msg]]
-print-err: func [msg] [print rejoin [red "✗ " reset msg]]
-print-info: func [msg] [print rejoin [cyan "→ " reset msg]]
-print-warn: func [msg] [print rejoin [yellow "! " reset msg]]
 
 ;-- Check if git is available
 check-git: does [
     result: ""
     call/output "git --version" result
     either find result "git version" [true][
-        print-err "Git not found. Please install git."
+        logger/log-error "Git not found. Please install git."
         false
     ]
 ]
@@ -41,8 +30,8 @@ check-git: does [
 ;-- Load dependencies file
 load-deps: func [/local data] [
     unless exists? deps-file [
-        print-err rejoin ["Dependencies file not found: " deps-file]
-        print-info "Create a deps.red file with your dependencies"
+        logger/log-error rejoin ["Dependencies file not found: " deps-file]
+        logger/log-info "Create a deps.red file with your dependencies"
         print ""
         print "Example deps.red:"
         print "["
@@ -53,69 +42,76 @@ load-deps: func [/local data] [
     attempt [load deps-file]
 ]
 
-;-- Parse dependencies into pairs [name url ...]
-parse-deps: func [deps /local result name url] [
+;-- Parse dependencies into package objects (ADT `package!`)
+parse-deps: func [deps /local result name url pkg] [
     result: copy []
     foreach [name url] deps [
-        append result reduce [to-string name url]
+        pkg: package/make-package to-string name to-string url
+        append result pkg
     ]
     result
 ]
 
-;-- Install a single package
-install-package: func [name url /local target cmd] [
+;-- Install a single package (accepts package object)
+install-package: func [pkg [object!] /local name url target cmd] [
+    name: package/get-name pkg
+    url:  package/get-url pkg
     target: deps-dir/:name/(#"/")
     
     either exists? target [
-        print-warn rejoin [name " already installed, skipping"]
+        logger/log-warn rejoin [name " already installed, skipping"]
         return true
     ][
-        print-info rejoin ["Installing " name "..."]
+        logger/log-info rejoin ["Installing " name "..."]
         cmd: rejoin ["git clone --depth 1 " url " " to-string target " 2>&1"]
         call/wait/shell cmd
         
         either exists? target [
-            print-ok rejoin [name " installed"]
+            logger/log-ok rejoin [name " installed"]
+            ;-- set path/status in ADT
+            package/set-path pkg target
+            package/set-status pkg 'installed
             true
         ][
-            print-err rejoin ["Failed to install " name]
+            logger/log-error rejoin ["Failed to install " name]
             false
         ]
     ]
 ]
 
-;-- Update a single package
-update-package: func [name /local target cmd result] [
+;-- Update a single package (accepts package object)
+update-package: func [pkg [object!] /local name target cmd result] [
+    name: package/get-name pkg
     target: deps-dir/:name/(#"/")
     
     unless exists? target [
-        print-err rejoin [name " not installed"]
+        logger/log-error rejoin [name " not installed"]
         return false
     ]
     
-    print-info rejoin ["Updating " name "..."]
+    logger/log-info rejoin ["Updating " name "..."]
     cmd: rejoin ["cd " to-string target " && git pull 2>&1"]
     result: ""
     call/output/shell cmd result
     
     either find result "Already up to date" [
-        print-ok rejoin [name " already up to date"]
+        logger/log-ok rejoin [name " already up to date"]
     ][
-        print-ok rejoin [name " updated"]
+        logger/log-ok rejoin [name " updated"]
     ]
     true
 ]
 
-;-- Remove a single package
-remove-package: func [name /local target cmd] [
-    target: deps-dir/:name/(#"/")
+;-- Remove a single package (accepts package object)
+remove-package: func [pkg [object!] /local name target] [
+    name: package/get-name pkg
+    target: either package/get-path pkg [package/get-path pkg][deps-dir/:name/(#"/")]
     unless exists? target [
-        print-err rejoin [name " not installed"]
+        logger/log-error rejoin [name " not installed"]
         return false
     ]
     
-    print-info rejoin ["Removing " name "..."]
-    
+    logger/log-info rejoin ["Removing " name "..."]
     attempt [
         delete-dir target
     ]
@@ -123,10 +119,10 @@ remove-package: func [name /local target cmd] [
         exists? target
         (length? read target) > 1
     ][
-        print-err rejoin ["Failed to remove " name]
+        logger/log-error rejoin ["Failed to remove " name]
         false
     ][
-        print-ok rejoin [name " removed"]
+        logger/log-ok rejoin [name " removed"]
         true
     ]
 ]
@@ -143,13 +139,13 @@ cmd-install: func [/local deps pairs] [
         attempt [make-dir deps-dir]
     ]
     
-    pairs: parse-deps deps
-    foreach [name url] pairs [
-        install-package name url
+    packages: parse-deps deps
+    foreach pkg packages [
+        install-package pkg
     ]
     
     print ""
-    print-ok "Done!"
+    logger/log-ok "Done!"
 ]
 
 cmd-update: func [/local deps pairs] [
@@ -159,23 +155,37 @@ cmd-update: func [/local deps pairs] [
     deps: load-deps
     unless deps [quit]
     
-    pairs: parse-deps deps
-    foreach [name url] pairs [
-        update-package name
+    packages: parse-deps deps
+    foreach pkg packages [
+        update-package pkg
     ]
     
     print ""
-    print-ok "Done!"
+    logger/log-ok "Done!"
 ]
 
-cmd-remove: func [name /local] [
+cmd-remove: func [name /local packages pkg found] [
     ;-- Verificar si se proporcionó un nombre de paquete
     either name [
-        ;-- Si se proporcionó, proceder a remover el paquete
-        remove-package name
+        packages: load-deps
+        unless packages [quit]
+        packages: parse-deps packages
+        ;-- Buscar el package declarado
+        found: none
+        foreach p packages [
+            if package/get-name p = name [found: p break]
+        ]
+        if found [
+            remove-package found
+        ][
+            ;-- No declarado: construir paquete temporal que apunte a deps/<name>/
+            pkg: package/make-package to-string name
+            package/set-path pkg deps-dir/:name/(#"/")
+            remove-package pkg
+        ]
     ][
         ;-- Si no se proporcionó, mostrar mensaje de uso
-        print-err "Usage: redpm remove <package-name>"
+        logger/log-error "Usage: redpm remove <package-name>"
     ]
 ]
 
@@ -186,13 +196,15 @@ cmd-list: func [/local deps pairs target] [
     print "Dependencies:"
     print ""
     
-    pairs: parse-deps deps
-    foreach [name url] pairs [
+    packages: parse-deps deps
+    foreach pkg packages [
+        name: package/get-name pkg
+        url:  package/get-url pkg
         target: deps-dir/:name/(#"/")
         either exists? target [
-            print rejoin ["  " green "●" reset " " name " (" url ")"]
+            print rejoin ["  " logger/green "●" logger/reset " " name " (" url ")"]
         ][
-            print rejoin ["  " red "○" reset " " name " (not installed)"]
+            print rejoin ["  " logger/red "○" logger/reset " " name " (not installed)"]
         ]
     ]
     print ""
@@ -200,7 +212,7 @@ cmd-list: func [/local deps pairs target] [
 
 cmd-init: func [] [
     either exists? deps-file [
-        print-warn "deps.red already exists"
+        logger/log-warn "deps.red already exists"
     ][
         write deps-file {[
     ;-- Add your dependencies here
@@ -209,8 +221,8 @@ cmd-init: func [] [
     ;-- Example:
     Red-Utils "https://github.com/ANLACO/Red-Utils"
 ]}
-        print-ok "Created deps.red"
-        print-info "Edit deps.red to add your dependencies"
+        logger/log-ok "Created deps.red"
+        logger/log-info "Edit deps.red to add your dependencies"
     ]
 ]
 
