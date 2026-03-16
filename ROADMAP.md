@@ -198,12 +198,4 @@ Prioridades actuales:
 
 ---
 
-*Última actualización: 2026-01-31*
-
-# Bugs
-- Windows: `.git` dentro de deps puede quedar sin poder borrarse por permisos; remove no elimina totalmente y futuras instalaciones detectan la dependencia como ya instalada.
-  - Reproducción: Windows, git clone de un paquete, luego `redpm remove <pkg>` → `.git` queda.
-  - Impacto: alto en Windows (requiere borrado manual).
-  - Workaround: borrar manualmente o usar PowerShell `Remove-Item -Recurse -Force`.
-  - Priorización: pendiente (v0.1.1 bugfix).
-  - Responsable / notas: implementar `delete-dir-force` + verificación de instalación corrupta.
+*Última actualización: 2026-03-16*
